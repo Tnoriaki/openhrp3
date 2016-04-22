@@ -58,7 +58,7 @@ namespace hrp {
            @brief compute sum of m x wc of subtree
            @note assuming wc is already computed by Body::calcCM()
         */
-        void calcSubMassCM();
+        void calcSubMassCM(bool calcIW = false);
 
         /**
            @deprecated use setAttitude().
@@ -189,6 +189,7 @@ namespace hrp {
 
         double  subm;			///< mass of subtree
         Vector3 submwc;			///< sum of m x wc of subtree
+        Matrix33 subIw; ///< sum of I of subtree
         std::vector<Sensor *> sensors;  ///< sensors attached to this link
         std::vector<Light *>  lights;   ///< lights attached to this link
       private:

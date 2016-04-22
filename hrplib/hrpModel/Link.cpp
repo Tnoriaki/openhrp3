@@ -46,6 +46,15 @@
 using namespace std;
 using namespace hrp;
 
+::Matrix33 D(Vector3 r)
+{
+    Matrix33 r_cross;
+    r_cross <<
+        0.0,  -r(2), r(1),
+        r(2),    0.0,  -r(0),
+        -r(1), r(0),    0.0;
+    return r_cross.transpose() * r_cross;
+}
 
 Link::Link()
 {
@@ -288,7 +297,7 @@ void Link::putInformation(std::ostream& out)
     }
 }
 
-void Link::calcSubMassCM()
+void Link::calcSubMassCM(bool calcIw)
 {
     subm = m;
     submwc = m*wc;
@@ -303,6 +312,17 @@ void Link::calcSubMassCM()
             submwc += l->submwc;
             l = l->sibling;
         }
+    }
+    if (calcIw){
+      subIw = R*I*R.transpose() + m*D(wc - submwc/subm);
+      if (child){ 
+        subIw += child->subIw + child->subm*D(submwc - child->submwc);
+        Link *l = child->sibling;
+        while (l){
+          subIw += l->subIw + l->subm*D(submwc - l->submwc);
+          l = l->sibling;
+        }
+      }
     }
     /*
     std::cout << "calcSubMassCM() : " << name << ", subm = " << subm 
