@@ -533,10 +533,10 @@ void Body::calcTotalMomentumFromJacobian(Vector3& out_P, Vector3& out_L)
     calcAngularMomentumJacobian(false,H);
 
     dvector dq;
-    int n = linkTraverse_.numLinks();
+    int n = numJoints();
     dq.resize(n);
     for(int i=0; i < n; i++){
-      Link* link = linkTraverse_[i];
+      Link* link = joint(i);
       dq[i] = link->dq;
     }
     dvector v;
@@ -1007,17 +1007,20 @@ void Body::calcAngularMomentumJacobian(Link *base, dmatrix &H)
         {
             Vector3 omega(sgn[j->jointId]*j->R*j->a);
             Vector3 Mcol = M.col(j->jointId);
-            Vector3 dp = (j->submwc/j->subm).cross(Mcol) + j->subIw*omega;
+            Vector3 dp = j->subIw*omega;
+            if (j->subm!=0) dp += (j->submwc/j->subm).cross(Mcol);
             H.col(j->jointId) = dp;
             break;
         }
-	case Link::SLIDE_JOINT:
-	{
-          Vector3 Mcol =M.col(j->jointId);
-	  Vector3 dp = (j->submwc/j->subm).cross(Mcol);
-	  H.col(j->jointId) = dp;
-	  break;
-	}
+        case Link::SLIDE_JOINT:
+        {
+          if(j->subm!=0){
+            Vector3 Mcol =M.col(j->jointId);
+            Vector3 dp = (j->submwc/j->subm).cross(Mcol);
+            H.col(j->jointId) = dp;
+          }
+          break;
+        }
         default:
             std::cerr << "calcCMJacobian() : unsupported jointType("
                       << j->jointType << ")" << std::endl;
@@ -1034,6 +1037,6 @@ void Body::calcAngularMomentumJacobian(Link *base, dmatrix &H)
           0.0, -cm(2), cm(1),
           cm(2), 0.0, -cm(0),
           -cm(1), cm(0), 0.0;
-        H -= cm_cross * M;
+        H.block(0,0,3,c) -= cm_cross * M;
     }
 }
