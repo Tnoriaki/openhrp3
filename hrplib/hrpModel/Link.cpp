@@ -302,30 +302,33 @@ void Link::calcSubMassCM(bool calcIw)
     subm = m;
     submwc = m*wc;
     if (child){ 
-        child->calcSubMassCM();
+        child->calcSubMassCM(true);
         subm += child->subm;
         submwc += child->submwc;
         Link *l = child->sibling;
         while (l){
-            l->calcSubMassCM();
+            l->calcSubMassCM(true);
             subm += l->subm;
             submwc += l->submwc;
             l = l->sibling;
         }
     }
     if (calcIw){
-      subIw = R*I*R.transpose() + m*D(wc - submwc/subm);
-      if (child){ 
-        subIw += child->subIw + child->subm*D(submwc - child->submwc);
+      subIw = R*I*R.transpose();
+      if (subm!=0.0) subIw +=  m*D(wc - submwc/subm);
+      if (child){
+        subIw += child->subIw;
+        if (child->subm!=0.0) subIw += child->subm*D(child->submwc/child->subm - submwc/subm);
         Link *l = child->sibling;
         while (l){
-          subIw += l->subIw + l->subm*D(submwc - l->submwc);
+          subIw += l->subIw;
+          if (l->subm!=0.0) subIw += l->subm*D(l->submwc/l->subm - submwc/subm);
           l = l->sibling;
         }
       }
     }
     /*
-    std::cout << "calcSubMassCM() : " << name << ", subm = " << subm 
+    std::cout << "calcSubMassCM() : " << name << ", subm = " << subm
               << ", subCM = " << vector3(submwc/subm) << std::endl;
     */
 }
