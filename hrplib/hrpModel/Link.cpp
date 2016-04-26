@@ -46,16 +46,6 @@
 using namespace std;
 using namespace hrp;
 
-::Matrix33 D(Vector3 r)
-{
-    Matrix33 r_cross;
-    r_cross <<
-        0.0,  -r(2), r(1),
-        r(2),    0.0,  -r(0),
-        -r(1), r(0),    0.0;
-    return r_cross.transpose() * r_cross;
-}
-
 Link::Link()
 {
     body = 0;
@@ -297,38 +287,44 @@ void Link::putInformation(std::ostream& out)
     }
 }
 
-void Link::calcSubMassCM(bool calcIw)
+void Link::calcSubMassCM()
 {
     subm = m;
     submwc = m*wc;
     if (child){ 
-        child->calcSubMassCM(true);
+        child->calcSubMassCM();
         subm += child->subm;
         submwc += child->submwc;
         Link *l = child->sibling;
         while (l){
-            l->calcSubMassCM(true);
+            l->calcSubMassCM();
             subm += l->subm;
             submwc += l->submwc;
             l = l->sibling;
         }
     }
-    if (calcIw){
-      subIw = R*I*R.transpose();
-      if (subm!=0.0) subIw +=  m*D(wc - submwc/subm);
-      if (child){
-        subIw += child->subIw;
-        if (child->subm!=0.0) subIw += child->subm*D(child->submwc/child->subm - submwc/subm);
-        Link *l = child->sibling;
-        while (l){
-          subIw += l->subIw;
-          if (l->subm!=0.0) subIw += l->subm*D(l->submwc/l->subm - submwc/subm);
-          l = l->sibling;
-        }
-      }
-    }
     /*
     std::cout << "calcSubMassCM() : " << name << ", subm = " << subm
               << ", subCM = " << vector3(submwc/subm) << std::endl;
     */
+}
+
+void Link::calcSubMassInertia(Matrix33& subIw)
+{
+      subIw = R*I*R.transpose();
+      if (subm!=0.0) subIw +=  m*hat(wc - submwc/subm).transpose()*hat(wc - submwc/subm);
+      if (child){
+        Matrix33 childsubIw;
+        child->calcSubMassInertia(childsubIw);
+        subIw += childsubIw;
+        if (child->subm!=0.0) subIw += child->subm*hat(child->submwc/child->subm - submwc/subm).transpose()*hat(child->submwc/child->subm - submwc/subm);
+        Link *l = child->sibling;
+        while (l){
+          Matrix33 lsubIw;
+          l->calcSubMassInertia(lsubIw);
+          subIw += lsubIw;
+          if (l->subm!=0.0) subIw += l->subm*hat(l->submwc/l->subm - submwc/subm).transpose()*hat(l->submwc/l->subm - submwc/subm);
+          l = l->sibling;
+        }
+      }
 }

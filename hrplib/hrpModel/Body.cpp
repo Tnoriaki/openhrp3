@@ -990,7 +990,7 @@ void Body::calcAngularMomentumJacobian(Link *base, dmatrix &H)
         
         H.resize(3, numJoints());
     }else{
-        rootLink()->calcSubMassCM(true);
+        rootLink()->calcSubMassCM();
         H.resize(3, numJoints()+6);
     }
     
@@ -1007,7 +1007,9 @@ void Body::calcAngularMomentumJacobian(Link *base, dmatrix &H)
         {
             Vector3 omega(sgn[j->jointId]*j->R*j->a);
             Vector3 Mcol = M.col(j->jointId);
-            Vector3 dp = j->subIw*omega;
+            Matrix33 jsubIw;
+            j->calcSubMassInertia(jsubIw);
+            Vector3 dp = jsubIw*omega;
             if (j->subm!=0) dp += (j->submwc/j->subm).cross(Mcol);
             H.col(j->jointId) = dp;
             break;
@@ -1029,7 +1031,8 @@ void Body::calcAngularMomentumJacobian(Link *base, dmatrix &H)
     if (!base){
         int c = numJoints();
         H.block(0, c, 3, 3).setZero();
-        Matrix33 Iw = rootLink_->subIw;
+        Matrix33 Iw;
+        rootLink_->calcSubMassInertia(Iw);
         H.block(0, c+3, 3, 3) = Iw;
         Vector3 cm = calcCM();
         Matrix33 cm_cross;
