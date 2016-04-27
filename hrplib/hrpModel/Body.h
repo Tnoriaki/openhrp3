@@ -262,6 +262,12 @@ namespace hrp {
            @note Link::wc must be computed by calcCM() before calling
         */
         void calcCMJacobian(Link *base, dmatrix &J);
+        /**
+           @brief compute Angular Momentum Jacobian around CoM of base
+           @param base link fixed to the environment
+           @param H Angular Momentum Jacobian
+           @note Link::wc must be computed by calcCM() before calling
+        */
         void calcAngularMomentumJacobian(Link *base, dmatrix &H);
       private:
 

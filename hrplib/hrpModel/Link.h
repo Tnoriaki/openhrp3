@@ -59,6 +59,10 @@ namespace hrp {
            @note assuming wc is already computed by Body::calcCM()
         */
         void calcSubMassCM();
+        /**
+           @brief compute sum of I of subtree
+           @note assuming wc,submw,submwc is already computed by Body::calcCM(),Link::calcSubMassCM()
+        */
         void calcSubMassInertia(Matrix33& subIw);
         /**
            @deprecated use setAttitude().
